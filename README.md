@@ -2,6 +2,61 @@
 
 # 🏛️ AI Legal Aid Triage Agent
 
+An AI-powered legal aid triage system that provides procedural guidance for Indian law.
+
+## Features
+
+- 🤖 **Intelligent Agent Loop**: LangGraph-based state machine for multi-step reasoning
+- 💬 **ChatGPT-like Experience**: Persistent conversations with memory
+- 📚 **RAG over Legal Documents**: Retrieval-augmented generation from verified legal sources
+- 🛡️ **Safety Guardrails**: Ensures responses stay within ethical boundaries
+- 📊 **Classification System**: Automatic legal domain classification with confidence scoring
+- 🔐 **Secure Authentication**: Supabase-based auth with JWT
+
+## Tech Stack
+
+### Backend
+- FastAPI + Python 3.11
+- LangChain + LangGraph
+- OpenAI GPT-4
+- Supabase (PostgreSQL + pgvector)
+
+### Frontend
+- Vite + React + TypeScript
+- shadcn/ui + Tailwind CSS
+- Supabase Auth
+
+## Quick Start
+
+### Prerequisites
+- Python 3.11+
+- Node.js 20+
+- Supabase account
+- OpenAI API key
+
+### Backend Setup
+
+```bash
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1  # Windows
+source venv/bin/activate      # Linux/Mac
+
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your credentials
+
+# Run database migrations (in Supabase SQL Editor)
+# Copy contents of scripts/setup_database.sql
+
+# Ingest legal documents
+python scripts/ingest_documents.py
+
+# Start server
+uvicorn app.main:app --reload
+
 <!-- [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) -->
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-00a393.svg)](https://fastapi.tiangolo.com)
