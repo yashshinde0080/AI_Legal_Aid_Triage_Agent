@@ -1,0 +1,49 @@
+
+---
+
+## Running Commands Summary
+
+### Windows PowerShell - Complete Setup
+
+```powershell
+# 1. Create project structure
+mkdir C:\LegalAidAgent
+cd C:\LegalAidAgent
+
+# 2. Backend setup
+mkdir backend
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+# Create all backend files as shown above
+pip install -r requirements.txt
+
+# 3. Setup Supabase
+# - Create project at supabase.com
+# - Run setup_database.sql in SQL Editor
+# - Get API keys
+
+# 4. Configure .env
+# Edit backend/.env with your keys
+
+# 5. Ingest documents
+python scripts/ingest_documents.py
+
+# 6. Start backend
+uvicorn app.main:app --reload --port 8000
+
+# 7. Frontend setup (new terminal)
+cd C:\LegalAidAgent\frontend
+npm create vite@latest . -- --template react-ts
+npm install
+# Create all frontend files as shown above
+npm install @supabase/supabase-js axios lucide-react tailwindcss postcss autoprefixer class-variance-authority clsx tailwind-merge @radix-ui/react-scroll-area @radix-ui/react-avatar @radix-ui/react-slot
+
+# 8. Configure frontend .env
+# Edit frontend/.env with Supabase keys
+
+# 9. Start frontend
+npm run dev
+
+# 10. Open browser
+# Navigate to http://localhost:5173
