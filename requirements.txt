@@ -1,0 +1,37 @@
+# Core Framework
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic
+pydantic-settings
+
+# LangChain & LangGraph
+langchain
+langchain-openai
+langchain-community
+langgraph
+langsmith
+
+# Database & Vector Store
+supabase
+pgvector
+psycopg2-binary
+
+# Document Processing
+pypdf
+python-docx
+unstructured
+
+# Embeddings
+tiktoken
+sentence-transformers
+
+# HTTP & Auth
+httpx
+python-jose[cryptography]
+passlib[bcrypt]
+
+# Utilities
+tenacity
+structlog
+python-multipart
