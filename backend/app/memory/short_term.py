@@ -84,7 +84,7 @@ class ConversationMemory:
             Formatted context string
         """
         messages = self.get_messages()
-        parts = []
+        parts: List[str] = []
         total_chars = 0
         
         # Start from most recent

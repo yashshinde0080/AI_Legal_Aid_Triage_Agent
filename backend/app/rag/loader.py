@@ -159,7 +159,7 @@ class DocumentLoader:
         Extract metadata from filename.
         Expected format: ActName_Section_Chapter.ext
         """
-        metadata = {
+        metadata: Dict[str, Any] = {
             "act_name": None,
             "section": None,
             "chapter": None,
@@ -201,7 +201,7 @@ class DocumentLoader:
         
         return metadata
     
-    def _infer_domain(self, act_name: str) -> Optional[str]:
+    def _infer_domain(self, act_name: Optional[str]) -> Optional[str]:
         """Infer legal domain from act name."""
         if not act_name:
             return None

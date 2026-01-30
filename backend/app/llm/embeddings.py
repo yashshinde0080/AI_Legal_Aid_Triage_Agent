@@ -96,7 +96,7 @@ async def get_embeddings_batch(texts: List[str], batch_size: int = 10) -> List[L
                 logger.error(f"Batch embedding error: {str(emb)}")
                 embeddings.append([0.0] * 384)  # Default dimension for MiniLM
             else:
-                embeddings.append(emb)
+                embeddings.append(emb)  # type: ignore
     
     return embeddings
 

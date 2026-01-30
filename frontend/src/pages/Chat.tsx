@@ -32,7 +32,7 @@ export default function Chat() {
   const handleSend = async (message: string) => {
     try {
       await send(message)
-    } catch (err) {
+    } catch {
       // Error is handled in useChat and displayed via toast
     }
   }

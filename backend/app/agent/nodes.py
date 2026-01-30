@@ -3,10 +3,11 @@ Agent Nodes
 LangGraph node implementations for the agent state machine.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import datetime
 
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.language_models import BaseChatModel
 
 from app.agent.state import LegalAgentState, ClassificationResult
 from app.agent.tools import (
@@ -26,7 +27,7 @@ from app.config import settings
 from app.utils.logger import logger
 
 
-async def intake_node(state: LegalAgentState, llm) -> LegalAgentState:
+async def intake_node(state: LegalAgentState, llm: Optional[BaseChatModel] = None) -> LegalAgentState:
     """
     Intake Node: Normalize input and attach context.
     
@@ -58,12 +59,15 @@ async def intake_node(state: LegalAgentState, llm) -> LegalAgentState:
     return state
 
 
-async def classify_node(state: LegalAgentState, llm) -> LegalAgentState:
+async def classify_node(state: LegalAgentState, llm: Optional[BaseChatModel] = None) -> LegalAgentState:
     """
     Classification Node: Classify the legal issue.
     """
     logger.info(f"Classify node processing: session={state['session_id']}")
     
+    if not llm:
+        raise ValueError("LLM is required for classification node")
+
     classifier = ClassifierTool(llm)
     
     # Build context from history
@@ -102,18 +106,31 @@ async def classify_node(state: LegalAgentState, llm) -> LegalAgentState:
     return state
 
 
-async def clarification_node(state: LegalAgentState, llm) -> LegalAgentState:
+async def clarification_node(state: LegalAgentState, llm: Optional[BaseChatModel] = None) -> LegalAgentState:
     """
     Clarification Node: Ask clarifying questions.
     """
     logger.info(f"Clarification node processing: session={state['session_id']}")
     
+    if not llm:
+        raise ValueError("LLM is required for clarification node")
+
     clarifier = ClarificationTool(llm)
     
+    classification = state["classification"]
+    if not classification:
+        # Fallback if classification failed
+        classification = {
+            "domain": "Unknown",
+            "sub_domain": "Unknown",
+            "confidence": 0.0,
+            "missing_fields": []
+        }
+
     # Generate question
     question = await clarifier.run(
-        missing_fields=state["classification"]["missing_fields"],
-        classification=state["classification"],
+        missing_fields=classification["missing_fields"],
+        classification=classification,  # type: ignore
         user_input=state["user_input"]
     )
     
@@ -133,7 +150,7 @@ async def clarification_node(state: LegalAgentState, llm) -> LegalAgentState:
     return state
 
 
-async def retrieve_node(state: LegalAgentState, llm) -> LegalAgentState:
+async def retrieve_node(state: LegalAgentState, llm: Optional[BaseChatModel] = None) -> LegalAgentState:
     """
     Retrieval Node: Retrieve relevant legal documents.
     """
@@ -143,6 +160,14 @@ async def retrieve_node(state: LegalAgentState, llm) -> LegalAgentState:
     
     # Build search query
     classification = state["classification"]
+    if not classification:
+        classification = {
+            "domain": "General",
+            "sub_domain": "Law",
+            "confidence": 0.0,
+            "missing_fields": []
+        }
+
     query = f"{classification['domain']} {classification['sub_domain']} procedure India"
     
     # Retrieve documents
@@ -152,7 +177,19 @@ async def retrieve_node(state: LegalAgentState, llm) -> LegalAgentState:
         k=5
     )
     
-    state["retrieved_docs"] = documents
+    # Map to RetrievedDocument format
+    mapped_docs = []
+    for doc in documents:
+        mapped_docs.append({
+            "id": doc.get("id", ""),
+            "content": doc.get("content", ""),
+            "title": doc.get("act_name", "Unknown Act"),
+            "section": doc.get("section", ""),
+            "source_url": doc.get("source_url"),
+            "score": doc.get("score", 0.0)
+        })
+
+    state["retrieved_docs"] = mapped_docs  # type: ignore
     
     # Log
     state["logs"].append({
@@ -171,14 +208,26 @@ Agent Nodes (continued)
 LangGraph node implementations for the agent state machine.
 """
 
-async def response_node(state: LegalAgentState, llm) -> LegalAgentState:
+async def response_node(state: LegalAgentState, llm: Optional[BaseChatModel] = None) -> LegalAgentState:
     """
     Response Node: Generate procedural guidance.
     """
     logger.info(f"Response node processing: session={state['session_id']}")
     
+    if not llm:
+        state["error"] = "LLM is required for response node"
+        state["current_node"] = "end"
+        return state
+
     try:
         classification = state["classification"]
+        if not classification:
+            classification = {
+                "domain": "General",
+                "sub_domain": "Law",
+                "confidence": 0.0,
+                "missing_fields": []
+            }
         
         # Format retrieved documents
         legal_docs = _format_retrieved_docs(state["retrieved_docs"])
@@ -226,7 +275,7 @@ async def response_node(state: LegalAgentState, llm) -> LegalAgentState:
         return state
 
 
-async def safety_node(state: LegalAgentState, llm) -> LegalAgentState:
+async def safety_node(state: LegalAgentState, llm: Optional[BaseChatModel] = None) -> LegalAgentState:
     """
     Safety Node: Validate response for safety.
     """
@@ -240,6 +289,12 @@ async def safety_node(state: LegalAgentState, llm) -> LegalAgentState:
         state["response"] = _sanitize_response(state["response"], quick_result["violations"])
     
     # LLM-based validation for thorough check
+    if not llm:
+         # Skip LLM check if not available, but log warning
+        logger.warning("LLM not available for safety node, skipping LLM validation")
+        state["current_node"] = "end"
+        return state
+
     try:
         validator = SafetyValidatorTool(llm)
         validation = await validator.run(state["response"])
@@ -275,7 +330,7 @@ async def safety_node(state: LegalAgentState, llm) -> LegalAgentState:
     return state
 
 
-async def memory_node(state: LegalAgentState, llm) -> LegalAgentState:
+async def memory_node(state: LegalAgentState, llm: Optional[BaseChatModel] = None) -> LegalAgentState:
     """
     Memory Node: Handle memory persistence.
     This node is called at the end to manage session memory.
@@ -293,7 +348,7 @@ async def memory_node(state: LegalAgentState, llm) -> LegalAgentState:
     return state
 
 
-async def error_node(state: LegalAgentState, llm) -> LegalAgentState:
+async def error_node(state: LegalAgentState, llm: Optional[BaseChatModel] = None) -> LegalAgentState:
     """
     Error Node: Handle errors gracefully.
     """

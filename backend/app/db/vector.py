@@ -206,7 +206,7 @@ class VectorStore:
                 "domain"
             ).execute()
             
-            domain_counts = {}
+            domain_counts: Dict[str, int] = {}
             for row in domain_result.data:
                 domain = row.get("domain", "unknown")
                 domain_counts[domain] = domain_counts.get(domain, 0) + 1

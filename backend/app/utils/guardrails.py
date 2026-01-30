@@ -3,7 +3,7 @@ Guardrails
 Safety checks and content validation.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, TypedDict
 from dataclasses import dataclass
 import re
 
@@ -17,8 +17,14 @@ class GuardrailViolation:
     match: Optional[str] = None
 
 
+class GuardrailRule(TypedDict):
+    patterns: List[str]
+    description: str
+    severity: str
+
+
 # Guardrail rules
-GUARDRAIL_RULES = {
+GUARDRAIL_RULES: Dict[str, GuardrailRule] = {
     "legal_advice": {
         "patterns": [
             r"you should (definitely|certainly|absolutely) (sue|file|take)",

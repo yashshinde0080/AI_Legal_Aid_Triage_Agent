@@ -4,8 +4,9 @@ Provides pluggable LLM backend support.
 """
 
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 from langchain_core.language_models import BaseChatModel
+from pydantic import SecretStr
 
 from app.config import settings
 from app.utils.logger import logger
@@ -65,10 +66,10 @@ def _get_gemini_llm() -> BaseChatModel:
     
     return ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
-        google_api_key=settings.google_api_key,
+        google_api_key=SecretStr(settings.google_api_key),  # type: ignore
         temperature=0,
-        max_output_tokens=2048,
-        convert_system_message_to_human=True
+        max_output_tokens=2048,  # type: ignore
+        convert_system_message_to_human=True  # type: ignore
     )
 
 
@@ -81,10 +82,10 @@ def _get_openrouter_llm() -> BaseChatModel:
     
     return ChatOpenAI(
         base_url="https://openrouter.ai/api/v1",
-        api_key=settings.openrouter_api_key,
+        api_key=SecretStr(settings.openrouter_api_key),
         model="mistralai/mistral-7b-instruct",
         temperature=0,
-        max_tokens=2048
+        max_tokens=2048  # type: ignore
     )
 
 
@@ -96,10 +97,10 @@ def _get_openai_llm() -> BaseChatModel:
     from langchain_openai import ChatOpenAI
     
     return ChatOpenAI(
-        api_key=settings.openai_api_key,
+        api_key=SecretStr(settings.openai_api_key),
         model="gpt-4o-mini",
         temperature=0,
-        max_tokens=2048
+        max_tokens=2048  # type: ignore
     )
 
 
@@ -134,27 +135,27 @@ def _get_xai_llm() -> BaseChatModel:
     
     return ChatOpenAI(
         base_url="https://api.x.ai/v1",
-        api_key=settings.xai_api_key,
+        api_key=SecretStr(settings.xai_api_key),
         model="grok-beta",
         temperature=0,
-        max_tokens=2048
+        max_tokens=2048  # type: ignore
     )
 
 
 # Provider availability check
-def get_available_providers() -> list[str]:
+def get_available_providers() -> List[str]:
     """Get list of configured and available LLM providers."""
     available = []
     
     if settings.google_api_key:
-        available.append(LLMProvider.GEMINI)
+        available.append(LLMProvider.GEMINI.value)
     if settings.openrouter_api_key:
-        available.append(LLMProvider.OPENROUTER)
+        available.append(LLMProvider.OPENROUTER.value)
     if settings.openai_api_key:
-        available.append(LLMProvider.OPENAI)
+        available.append(LLMProvider.OPENAI.value)
     if settings.hf_api_token:
-        available.append(LLMProvider.HUGGINGFACE)
+        available.append(LLMProvider.HUGGINGFACE.value)
     if settings.xai_api_key:
-        available.append(LLMProvider.XAI)
+        available.append(LLMProvider.XAI.value)
     
     return available
