@@ -43,7 +43,7 @@ def create_agent_graph() -> StateGraph:
     graph.add_node("respond", response_node)
     graph.add_node("validate", safety_node)
     graph.add_node("memory", memory_node)
-    graph.add_node("error", error_node)
+    graph.add_node("error_handler", error_node)
     
     # Set entry point
     graph.set_entry_point("intake")
@@ -60,7 +60,7 @@ def create_agent_graph() -> StateGraph:
         {
             "clarify": "clarify",
             "retrieve": "retrieve",
-            "error": "error"
+            "error": "error_handler"
         }
     )
     
@@ -80,7 +80,7 @@ def create_agent_graph() -> StateGraph:
     graph.add_edge("memory", END)
     
     # Error -> END
-    graph.add_edge("error", END)
+    graph.add_edge("error_handler", END)
     
     return graph
 

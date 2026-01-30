@@ -9,7 +9,7 @@ from typing import List, Optional
 from datetime import datetime
 
 from app.api.auth import get_current_user
-from app.db.supabase import get_supabase_client
+from app.db.supabase import get_supabase_client, get_service_client
 from app.utils.logger import logger
 
 
@@ -47,7 +47,7 @@ async def list_sessions(user: dict = Depends(get_current_user)):
     Returns sessions ordered by last updated.
     """
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         
         # Get sessions
         sessions_result = client.table("chat_sessions").select(
@@ -98,7 +98,7 @@ async def get_session(session_id: str, user: dict = Depends(get_current_user)):
     Get a specific chat session.
     """
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         
         result = client.table("chat_sessions").select(
             "id, title, created_at, updated_at, user_id"
@@ -144,7 +144,7 @@ async def get_session_messages(
     Get messages for a specific chat session.
     """
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         
         # Verify session ownership
         session_result = client.table("chat_sessions").select(
@@ -195,7 +195,7 @@ async def update_session(
     Update a chat session's title.
     """
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         
         # Verify session ownership
         session_result = client.table("chat_sessions").select(
@@ -238,7 +238,7 @@ async def delete_session(session_id: str, user: dict = Depends(get_current_user)
     Delete a chat session and all its messages.
     """
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         
         # Verify session ownership
         session_result = client.table("chat_sessions").select(

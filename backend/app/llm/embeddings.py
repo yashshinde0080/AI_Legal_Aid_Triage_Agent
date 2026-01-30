@@ -1,109 +1,89 @@
 """
 Embedding Functions
-Uses HuggingFace Inference API for embeddings.
+Uses local SentenceTransformer for embeddings (unified with ingestion).
 """
 
-from typing import List
-import httpx
+from typing import List, Optional
 import asyncio
-
-from app.config import settings
+from app.rag.embedder import DocumentEmbedder
 from app.utils.logger import logger
 
+# Global instance to load model once into memory
+_global_embedder: Optional[DocumentEmbedder] = None
 
-# HuggingFace Inference API endpoint
-HF_INFERENCE_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction"
-
+def get_embedder_instance() -> DocumentEmbedder:
+    """Singleton pattern for the embedder model."""
+    global _global_embedder
+    if _global_embedder is None:
+        logger.info("Initializing global SentenceTransformer model...")
+        _global_embedder = DocumentEmbedder()
+    return _global_embedder
 
 async def get_embedding(text: str) -> List[float]:
     """
-    Get embedding vector for text using HuggingFace Inference API.
-    
-    Args:
-        text: Text to embed
-        
-    Returns:
-        Embedding vector as list of floats
+    Get embedding vector for text using local model.
     """
     if not text or not text.strip():
         raise ValueError("Text cannot be empty")
     
-    # Truncate long texts
-    text = text[:8000]
+    embedder = get_embedder_instance()
     
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                f"{HF_INFERENCE_URL}/{settings.embedding_model}",
-                headers={
-                    "Authorization": f"Bearer {settings.hf_api_token_emb}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "inputs": text,
-                    "options": {
-                        "wait_for_model": True
-                    }
-                }
-            )
-            
-            response.raise_for_status()
-            result = response.json()
-            
-            # Handle different response formats
-            if isinstance(result, list):
-                if isinstance(result[0], list):
-                    # Nested list - take mean across tokens
-                    import numpy as np
-                    embedding = np.mean(result, axis=0).tolist()
-                else:
-                    embedding = result
-            else:
-                raise ValueError(f"Unexpected response format: {type(result)}")
-            
-            return embedding
-            
-    except httpx.HTTPError as e:
-        logger.error(f"HuggingFace API error: {str(e)}")
-        raise
-    except Exception as e:
-        logger.error(f"Embedding error: {str(e)}")
-        raise
+    # Reuse the logic in DocumentEmbedder, but for a single string.
+    # To keep it efficient, we wrap it in a pseudo-document structure 
+    # or expose a direct method on DocumentEmbedder.
+    # Since DocumentEmbedder expects list[dict], let's create a helper there or just use it here.
+    
+    # Better: Use the thread pool execution from the embedder instance
+    loop = asyncio.get_running_loop()
+    
+    # model.encode can take a single string
+    embedding = await loop.run_in_executor(
+        None,
+        lambda: embedder.model.encode(
+            text,
+            convert_to_numpy=True,
+            normalize_embeddings=True
+        )
+    )
+    
+    return embedding.tolist()
 
 
-async def get_embeddings_batch(texts: List[str], batch_size: int = 10) -> List[List[float]]:
+async def get_embeddings_batch(texts: List[str], batch_size: int = 32) -> List[List[float]]:
     """
-    Get embeddings for multiple texts in batches.
-    
-    Args:
-        texts: List of texts to embed
-        batch_size: Number of texts to process in parallel
-        
-    Returns:
-        List of embedding vectors
+    Get embeddings for multiple texts using local model.
     """
-    embeddings = []
+    if not texts:
+        return []
+
+    embedder = get_embedder_instance()
+    loop = asyncio.get_running_loop()
     
-    for i in range(0, len(texts), batch_size):
-        batch = texts[i:i + batch_size]
-        
-        # Process batch in parallel
-        tasks = [get_embedding(text) for text in batch]
-        batch_embeddings = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        for emb in batch_embeddings:
-            if isinstance(emb, Exception):
-                logger.error(f"Batch embedding error: {str(emb)}")
-                embeddings.append([0.0] * 384)  # Default dimension for MiniLM
-            else:
-                embeddings.append(emb)
+    embeddings = await loop.run_in_executor(
+        None,
+        lambda: embedder.model.encode(
+            texts,
+            batch_size=batch_size,
+            show_progress_bar=False,
+            convert_to_numpy=True,
+            normalize_embeddings=True
+        )
+    )
     
-    return embeddings
+    return embeddings.tolist()
 
 
 def get_embedding_sync(text: str) -> List[float]:
     """
     Synchronous wrapper for get_embedding.
-    Used in non-async contexts.
     """
-    return asyncio.run(get_embedding(text))
+    if not text or not text.strip():
+        raise ValueError("Text cannot be empty")
+        
+    embedder = get_embedder_instance()
+    embedding = embedder.model.encode(
+        text,
+        convert_to_numpy=True,
+        normalize_embeddings=True
+    )
+    return embedding.tolist()

@@ -28,7 +28,9 @@ dependencies = [
     "python-dotenv==1.0.1",
     "python-jose[cryptography]==3.3.0",
     "python-multipart==0.0.19",
+    "sentence-transformers>=5.2.2",
     "supabase==2.11.0",
     "tiktoken==0.8.0",
+    "torch>=2.10.0",
     "uvicorn[standard]==0.32.1",
 ]

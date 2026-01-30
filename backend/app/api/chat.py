@@ -13,7 +13,7 @@ from app.api.auth import get_current_user
 from app.agent.graph import create_agent_graph, run_agent
 from app.agent.state import create_initial_state
 from app.memory.long_term import save_message, get_session_messages
-from app.db.supabase import get_supabase_client
+from app.db.supabase import get_supabase_client, get_service_client
 from app.config import settings
 from app.utils.logger import logger
 
@@ -150,7 +150,7 @@ async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
 async def create_new_session(user_id: str) -> str:
     """Create a new chat session for the user."""
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         session_id = str(uuid.uuid4())
         
         client.table("chat_sessions").insert({
@@ -170,7 +170,7 @@ async def create_new_session(user_id: str) -> str:
 async def validate_session_ownership(session_id: str, user_id: str):
     """Validate that the session belongs to the user."""
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         result = client.table("chat_sessions").select("user_id").eq(
             "id", session_id
         ).single().execute()
@@ -193,7 +193,7 @@ async def validate_session_ownership(session_id: str, user_id: str):
 async def update_session_timestamp(session_id: str):
     """Update the session's last updated timestamp."""
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         client.table("chat_sessions").update({
             "updated_at": datetime.utcnow().isoformat()
         }).eq("id", session_id).execute()

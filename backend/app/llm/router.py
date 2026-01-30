@@ -64,11 +64,11 @@ def _get_gemini_llm() -> BaseChatModel:
     from langchain_google_genai import ChatGoogleGenerativeAI
     
     return ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-2.0-flash",
         google_api_key=settings.google_api_key,
         temperature=0,
         max_output_tokens=2048,
-        convert_system_message_to_human=True
+        max_retries=3
     )
 
 
@@ -122,7 +122,7 @@ def _get_huggingface_llm() -> BaseChatModel:
         }
     )
     
-    return llm
+    return ChatHuggingFace(llm=llm)
 
 
 def _get_xai_llm() -> BaseChatModel:

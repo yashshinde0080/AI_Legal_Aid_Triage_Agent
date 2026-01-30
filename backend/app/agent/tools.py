@@ -221,37 +221,18 @@ class SafetyValidatorTool:
             return {"valid": True, "violations": [], "suggested_fix": None}
 
 
+from app.utils.guardrails import check_guardrails
+
 # Quick validation functions (rule-based, no LLM)
 def quick_safety_check(response: str) -> Dict[str, Any]:
     """
     Quick rule-based safety check without LLM.
     Use for fast validation before LLM validation.
     """
-    violations = []
+    result = check_guardrails(response)
     
-    # Check for advice language
-    advice_phrases = [
-        "you should definitely",
-        "you must",
-        "i advise you to",
-        "i recommend that you",
-        "you will win",
-        "you will lose",
-        "guaranteed",
-        "100% certain"
-    ]
-    
-    response_lower = response.lower()
-    
-    for phrase in advice_phrases:
-        if phrase in response_lower:
-            violations.append(f"Advice language detected: '{phrase}'")
-    
-    # Check for specific lawyer mentions
-    if "contact lawyer" in response_lower and "@" in response:
-        violations.append("Specific lawyer contact detected")
-    
+    # Adapt format to match what nodes.py expects
     return {
-        "valid": len(violations) == 0,
-        "violations": violations
+        "valid": result["valid"],
+        "violations": [v["description"] for v in result["violations"]]
     }

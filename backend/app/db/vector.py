@@ -6,10 +6,16 @@ Handles pgvector operations for RAG.
 from typing import List, Dict, Any, Optional
 import json
 
-from app.db.supabase import get_supabase_client
+from app.db.supabase import get_service_client
 from app.llm.embeddings import get_embedding
 from app.utils.logger import logger
 
+
+import uuid
+from typing import List, Dict, Any, Optional
+from app.db.supabase import get_service_client
+from app.llm.embeddings import get_embedding
+from app.utils.logger import logger
 
 class VectorStore:
     """
@@ -20,7 +26,8 @@ class VectorStore:
     TABLE_NAME = "legal_chunks"
     
     def __init__(self):
-        self.client = get_supabase_client()
+        # Use service client to bypass RLS for ingestion
+        self.client = get_service_client()
     
     async def add_documents(
         self,
@@ -44,13 +51,15 @@ class VectorStore:
             
             for doc in batch:
                 try:
-                    # Generate embedding
-                    embedding = await get_embedding(doc["content"])
-                    
+                    # Check for existing embedding
+                    if "embedding" not in doc or doc["embedding"] is None:
+                        logger.warning(f"Document missing embedding, skipping: {doc.get('act_name', 'Unknown')}")
+                        continue
+                        
                     # Prepare record
                     record = {
                         "content": doc["content"],
-                        "embedding": embedding,
+                        "embedding": doc["embedding"],
                         "act_name": doc.get("act_name"),
                         "section": doc.get("section"),
                         "chapter": doc.get("chapter"),
@@ -75,7 +84,7 @@ class VectorStore:
         query: str,
         k: int = 5,
         filter_domain: Optional[str] = None,
-        threshold: float = 0.7
+        threshold: float = 0.5
     ) -> List[Dict[str, Any]]:
         """
         Perform similarity search on the vector store.

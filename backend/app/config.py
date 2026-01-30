@@ -3,6 +3,7 @@ Application configuration using Pydantic Settings.
 All environment variables are validated and typed.
 """
 
+import os
 from functools import lru_cache
 from typing import List
 from pydantic_settings import BaseSettings
@@ -55,9 +56,10 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.cors_origins.split(",")]
     
     class Config:
-        env_file = ".env"
+        env_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
         env_file_encoding = "utf-8"
         case_sensitive = False
+        extra = "ignore"
 
 
 @lru_cache()

@@ -7,6 +7,7 @@ import sys
 import os
 import asyncio
 from pathlib import Path
+from typing import Optional
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -55,12 +56,15 @@ async def ingest_directory(directory: str, domain: Optional[str] = None):
     embedded_chunks = await embedder.embed_documents(chunks)
     
     # Filter out failed embeddings
-    valid_chunks = [c for c in embedded_chunks if c.get("embedding") is not None]
-    logger.info(f"Successfully embedded {len(valid_chunks)} chunks")
+    failed = [c for c in embedded_chunks if not c.get("embedding")]
+    if failed:
+        raise RuntimeError(f"Embedding failed for {len(failed)} chunks")
+
+    logger.info(f"Successfully embedded {len(embedded_chunks)} chunks")
     
     # Store in vector database
     vector_store = VectorStore()
-    added = await vector_store.add_documents(valid_chunks)
+    added = await vector_store.add_documents(embedded_chunks)
     
     logger.info(f"Added {added} chunks to vector store")
 
@@ -281,7 +285,7 @@ Complaint procedure:
     logger.info(f"Successfully ingested {added} sample documents")
 
 
-from typing import Optional
+
 
 
 if __name__ == "__main__":
@@ -292,5 +296,14 @@ if __name__ == "__main__":
         domain = sys.argv[2] if len(sys.argv) > 2 else None
         asyncio.run(ingest_directory(directory, domain))
     else:
-        logger.info("No directory specified. Ingesting sample data...")
-        asyncio.run(ingest_sample_data())
+        # Default to Files directory in the same folder as this script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        files_dir = os.path.join(current_dir, "Files")
+        
+        if os.path.exists(files_dir):
+            logger.info(f"Ingesting from default directory: {files_dir}")
+            # Ensure the directory exists and pass it to the ingestion function
+            asyncio.run(ingest_directory(files_dir))
+        else:
+            logger.info("Files directory not found. Ingesting sample data...")
+            asyncio.run(ingest_sample_data())

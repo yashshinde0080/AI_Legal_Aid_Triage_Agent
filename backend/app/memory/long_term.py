@@ -7,7 +7,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 import uuid
 
-from app.db.supabase import get_supabase_client
+from app.db.supabase import get_supabase_client, get_service_client
 from app.utils.logger import logger
 
 
@@ -30,7 +30,7 @@ async def save_message(
         Message ID
     """
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         
         message_id = str(uuid.uuid4())
         
@@ -71,7 +71,7 @@ async def get_session_messages(
         List of messages
     """
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         
         result = client.table("chat_messages").select(
             "id, role, content, metadata, created_at"
@@ -99,7 +99,7 @@ async def get_session_summary(session_id: str) -> Optional[str]:
         Session summary or None
     """
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         
         result = client.table("chat_sessions").select(
             "summary"
@@ -126,7 +126,7 @@ async def update_session_summary(session_id: str, summary: str) -> bool:
         Success status
     """
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         
         client.table("chat_sessions").update({
             "summary": summary,
@@ -151,7 +151,7 @@ async def delete_session_messages(session_id: str) -> int:
         Number of deleted messages
     """
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         
         result = client.table("chat_messages").delete().eq(
             "session_id", session_id
@@ -175,7 +175,7 @@ async def get_message_count(session_id: str) -> int:
         Message count
     """
     try:
-        client = get_supabase_client()
+        client = get_service_client()
         
         result = client.table("chat_messages").select(
             "id", count="exact"

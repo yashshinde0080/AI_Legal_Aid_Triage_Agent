@@ -24,6 +24,7 @@ from app.agent.prompts import (
 )
 from app.config import settings
 from app.utils.logger import logger
+from app.utils.guardrails import sanitize_text
 
 
 async def intake_node(state: LegalAgentState, llm) -> LegalAgentState:
@@ -237,7 +238,7 @@ async def safety_node(state: LegalAgentState, llm) -> LegalAgentState:
     
     if not quick_result["valid"]:
         logger.warning(f"Quick safety check failed: {quick_result['violations']}")
-        state["response"] = _sanitize_response(state["response"], quick_result["violations"])
+        state["response"] = sanitize_text(state["response"], quick_result["violations"])
     
     # LLM-based validation for thorough check
     try:
@@ -361,23 +362,3 @@ def _format_chat_history(history: list) -> str:
     return "\n".join(formatted)
 
 
-def _sanitize_response(response: str, violations: list) -> str:
-    """Attempt to sanitize response based on violations."""
-    sanitized = response
-    
-    # Simple replacement patterns
-    replacements = {
-        "you should definitely": "you may consider",
-        "you must": "you may need to",
-        "i advise you to": "one option is to",
-        "i recommend that you": "you might consider",
-        "you will win": "the outcome depends on various factors",
-        "you will lose": "the outcome depends on various factors",
-        "guaranteed": "possible",
-        "100% certain": "subject to case-specific factors"
-    }
-    
-    for old, new in replacements.items():
-        sanitized = sanitized.lower().replace(old, new)
-    
-    return sanitized + f"\n\n{DISCLAIMER}"
