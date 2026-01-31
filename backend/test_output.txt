@@ -1,0 +1,21 @@
+============================================================
+API Connection Test
+============================================================
+
+Configured LLM_PROVIDER: gemini
+
+=== Testing Gemini API ===
+Traceback (most recent call last):
+  File "D:\AI_Legal_Aid_Triage_Agent\backend\test_api_connection.py", line 154, in <module>
+    asyncio.run(main())
+  File "C:\Users\yash shinde\AppData\Roaming\uv\python\cpython-3.10.19-windows-x86_64-none\lib\asyncio\runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "C:\Users\yash shinde\AppData\Roaming\uv\python\cpython-3.10.19-windows-x86_64-none\lib\asyncio\base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "D:\AI_Legal_Aid_Triage_Agent\backend\test_api_connection.py", line 129, in main
+    results["gemini"] = await test_gemini()
+  File "D:\AI_Legal_Aid_Triage_Agent\backend\test_api_connection.py", line 25, in test_gemini
+    print(f"\u2713 GOOGLE_API_KEY found (length: {len(api_key)})")
+  File "C:\Users\yash shinde\AppData\Roaming\uv\python\cpython-3.10.19-windows-x86_64-none\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 0: character maps to <undefined>
