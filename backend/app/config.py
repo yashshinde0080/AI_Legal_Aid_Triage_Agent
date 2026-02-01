@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     
     # Agent Settings
     confidence_threshold: float = Field(default=0.7, env="CONFIDENCE_THRESHOLD")
-    max_clarification_loops: int = Field(default=10, env="MAX_CLARIFICATION_LOOPS")
+    max_clarification_loops: int = Field(default=15, env="MAX_CLARIFICATION_LOOPS")
     max_context_messages: int = Field(default=10, env="MAX_CONTEXT_MESSAGES")
     
     # Security

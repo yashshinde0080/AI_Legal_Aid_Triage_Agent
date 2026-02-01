@@ -45,6 +45,7 @@ class LegalAgentState(TypedDict):
     
     # Context
     chat_history: List[ChatMessage]
+    context_summary: Optional[str]
     
     # Classification
     classification: Optional[ClassificationResult]
@@ -147,6 +148,7 @@ def create_initial_state(
         session_id=session_id,
         user_id=user_id,
         chat_history=formatted_history,
+        context_summary=None,
         classification=None,
         confidence=0.0,
         retrieved_docs=[],

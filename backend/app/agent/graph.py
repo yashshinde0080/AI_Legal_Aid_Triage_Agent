@@ -12,6 +12,7 @@ from langgraph.graph import StateGraph, END
 from app.agent.state import LegalAgentState, create_initial_state
 from app.agent.nodes import (
     intake_node,
+    check_memory_node,
     classify_node,
     clarification_node,
     retrieve_node,
@@ -37,6 +38,7 @@ def create_agent_graph() -> StateGraph:
     
     # Add nodes
     graph.add_node("intake", intake_node)
+    graph.add_node("check_memory", check_memory_node)
     graph.add_node("classify", classify_node)
     graph.add_node("clarify", clarification_node)
     graph.add_node("retrieve", retrieve_node)
@@ -50,8 +52,11 @@ def create_agent_graph() -> StateGraph:
     
     # Add edges
     
-    # Intake -> Classify
-    graph.add_edge("intake", "classify")
+    # Intake -> Check Memory
+    graph.add_edge("intake", "check_memory")
+
+    # Check Memory -> Classify
+    graph.add_edge("check_memory", "classify")
     
     # Classify -> Clarify OR Retrieve (conditional)
     graph.add_conditional_edges(
@@ -73,7 +78,12 @@ def create_agent_graph() -> StateGraph:
     # Respond -> Validate
     graph.add_edge("respond", "validate")
     
-    # Validate -> Memory
+    # Validate -> END
+    # As per updated request: Validate Guardrails -> END
+    # Old memory node is redundant if checking at start, but we can keep it as a no-op or logging step if desired.
+    # The user chart has Validate Guardrails -> END.
+    # I will link Validate -> END directly, or Validate -> Memory -> END if we want to keep structure.
+    # The nodes.py safety_node sets next to "memory".
     graph.add_edge("validate", "memory")
     
     # Memory -> END
@@ -157,6 +167,9 @@ class LegalTriageAgent:
             if current_state["current_node"] == "end":
                 return current_state
             
+            # Execute check_memory
+            current_state = await check_memory_node(current_state, llm)
+
             # Execute classify
             current_state = await classify_node(current_state, llm)
             

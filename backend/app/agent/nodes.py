@@ -63,6 +63,30 @@ async def intake_node(state: LegalAgentState, llm) -> LegalAgentState:
         "is_followup": result["is_followup"]
     })
     
+    state["current_node"] = "check_memory"
+    return state
+
+
+
+async def check_memory_node(state: LegalAgentState, llm) -> LegalAgentState:
+    """
+    Check Memory Node: Retrieve and summarize memory context.
+    """
+    logger.info(f"Check memory node processing: session={state['session_id']}")
+    
+    # Build context from chat history
+    # In a more advanced implementation, this would query a vector store for long-term memory
+    # For now, we use the conversation history 
+    context = _build_context(state["chat_history"])
+    
+    state["context_summary"] = context
+    
+    state["logs"].append({
+        "node": "check_memory",
+        "timestamp": datetime.utcnow().isoformat(),
+        "context_length": len(context)
+    })
+    
     state["current_node"] = "classify"
     return state
 
@@ -75,8 +99,10 @@ async def classify_node(state: LegalAgentState, llm) -> LegalAgentState:
     
     agent = ClassifierAgent(llm)
     
-    # Build context string for classifier
-    context = _build_context(state["chat_history"])
+    # Use prepared context or build it
+    context = state.get("context_summary")
+    if not context:
+        context = _build_context(state["chat_history"])
     
     # Run classification
     result = await agent.classify(
