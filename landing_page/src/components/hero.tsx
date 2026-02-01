@@ -1,5 +1,5 @@
 import { ArrowUpRight, CirclePlay } from "lucide-react";
-import { Link } from "react-router-dom";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -13,9 +13,9 @@ export default function Hero() {
             className="rounded-full border-border py-1"
             variant="secondary"
           >
-            <Link to="#">
+            <a href="#">
               Just released v1.0.0 <ArrowUpRight className="ml-1 size-4" />
-            </Link>
+            </a>
           </Badge>
           <h1 className="mt-6 max-w-[17ch] font-semibold text-4xl leading-[1.2]! tracking-[-0.035em] md:text-5xl lg:text-[2.75rem] xl:text-[3.25rem]">
             Customized Shadcn UI Blocks & Components
@@ -38,7 +38,7 @@ export default function Hero() {
             </Button>
           </div>
         </div>
-        <div className="aspect-video w-full rounded-xl bg-accent lg:aspect-auto lg:h-[calc(100vh-4rem)] lg:w-[1000px]" />
+        <div className="aspect-video w-full rounded-xl bg-accent lg:aspect-auto lg:h-screen lg:w-[1000px] lg:rounded-none" />
       </div>
     </div>
   );

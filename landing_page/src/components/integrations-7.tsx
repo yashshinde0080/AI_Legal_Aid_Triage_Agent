@@ -2,8 +2,7 @@ import { Gemini, Replit, MagicUI, VSCodium, MediaWiki, GooglePaLM } from '@/comp
 import { LogoIcon } from '@/components/logo'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-// import Link from 'next/link'
-import { Link } from "react-router-dom";
+
 import { InfiniteSlider } from '@/components/ui/infinite-slider'
 
 export default function IntegrationsSection() {
@@ -108,7 +107,7 @@ export default function IntegrationsSection() {
                             variant="outline"
                             size="sm"
                             asChild>
-                            <Link to="#">Get Started</Link>
+                            <a href="#">Get Started</a>
                         </Button>
                     </div>
                 </div>
