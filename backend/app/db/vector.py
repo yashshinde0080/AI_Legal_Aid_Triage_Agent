@@ -5,17 +5,12 @@ Handles pgvector operations for RAG.
 
 from typing import List, Dict, Any, Optional
 import json
-
-from app.db.supabase import get_service_client
-from app.llm.embeddings import get_embedding
-from app.utils.logger import logger
-
-
 import uuid
-from typing import List, Dict, Any, Optional
+
 from app.db.supabase import get_service_client
 from app.llm.embeddings import get_embedding
 from app.utils.logger import logger
+
 
 class VectorStore:
     """

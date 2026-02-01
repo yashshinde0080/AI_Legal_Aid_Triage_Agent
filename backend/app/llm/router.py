@@ -64,7 +64,7 @@ def _get_gemini_llm() -> BaseChatModel:
     from langchain_google_genai import ChatGoogleGenerativeAI
     
     return ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
+        model="gemini-1.5-flash",
         google_api_key=settings.google_api_key,
         temperature=0,
         max_output_tokens=2048,
@@ -82,7 +82,7 @@ def _get_openrouter_llm() -> BaseChatModel:
     return ChatOpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=settings.openrouter_api_key,
-        model="mistralai/mistral-7b-instruct",
+        model="arcee-ai/trinity-large-preview:free",
         temperature=0,
         max_tokens=2048
     )
@@ -109,7 +109,6 @@ def _get_huggingface_llm() -> BaseChatModel:
         raise ValueError("HF_API_TOKEN not configured")
     
     from langchain_community.llms import HuggingFaceHub
-    from langchain_core.language_models import BaseChatModel
     from langchain.chat_models import ChatHuggingFace
     
     # Use Zephyr as the chat model

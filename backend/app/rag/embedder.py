@@ -1,4 +1,3 @@
-from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Any
 from app.utils.logger import logger
 import asyncio
@@ -9,8 +8,25 @@ class DocumentEmbedder:
         model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
         batch_size: int = 32,
     ):
-        self.model = SentenceTransformer(model_name)
+        self.model_name = model_name
         self.batch_size = batch_size
+        self._model = None
+    
+    @property
+    def model(self):
+        """Lazy load the model."""
+        if self._model is None:
+            try:
+                from sentence_transformers import SentenceTransformer
+                logger.info(f"Loading embedding model: {self.model_name}")
+                self._model = SentenceTransformer(self.model_name)
+            except ImportError:
+                logger.error("sentence-transformers not installed. Please run: pip install sentence-transformers")
+                raise
+            except Exception as e:
+                logger.error(f"Failed to load embedding model: {e}")
+                raise
+        return self._model
 
     async def embed_documents(self, documents: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """

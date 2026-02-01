@@ -10,10 +10,10 @@ from datetime import datetime
 import uuid
 
 from app.api.auth import get_current_user
-from app.agent.graph import create_agent_graph, run_agent
+from app.agent.graph import run_agent
 from app.agent.state import create_initial_state
 from app.memory.long_term import save_message, get_session_messages
-from app.db.supabase import get_supabase_client, get_service_client
+from app.db.supabase import get_service_client
 from app.config import settings
 from app.utils.logger import logger
 
@@ -112,7 +112,8 @@ async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
             content=result["response"],
             metadata={
                 "classification": result.get("classification"),
-                "confidence": result.get("confidence")
+                "confidence": result.get("confidence"),
+                "needs_clarification": result.get("needs_clarification", False)
             }
         )
         
@@ -129,11 +130,16 @@ async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
                 source_url=doc.get("source_url")
             ))
         
+        # Get classification safely
+        classification_result = result.get("classification")
+        domain = classification_result.get("domain") if classification_result else None
+        sub_domain = classification_result.get("sub_domain") if classification_result else None
+
         return ChatResponse(
             response=result["response"],
             session_id=session_id,
-            classification=result.get("classification", {}).get("domain"),
-            sub_classification=result.get("classification", {}).get("sub_domain"),
+            classification=domain,
+            sub_classification=sub_domain,
             confidence=result.get("confidence", 0.0),
             needs_clarification=result.get("needs_clarification", False),
             sources=sources

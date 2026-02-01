@@ -1,59 +1,67 @@
 """
 Agent Nodes
 LangGraph node implementations for the agent state machine.
+This module integrates specialized agents from app.agents package.
 """
 
-from typing import Dict, Any
+from typing import List
 from datetime import datetime
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from app.agent.state import LegalAgentState, ClassificationResult, RetrievedDocument
+from app.agents.intake_agent import IntakeAgent
+from app.agents.classifier_agent import ClassifierAgent
+from app.agents.clarification_agent import ClarificationAgent
+from app.agents.retriever_agent import RetrieverAgent
+from app.agents.response_agent import ResponseAgent
+from app.agents.safety_agent import SafetyAgent
 
-from app.agent.state import LegalAgentState, ClassificationResult
-from app.agent.tools import (
-    ClassifierTool,
-    ClarificationTool,
-    RetrieverTool,
-    SafetyValidatorTool,
-    quick_safety_check
-)
 from app.agent.prompts import (
-    RESPONSE_PROMPT,
-    DISCLAIMER,
     ERROR_RESPONSE,
-    OUT_OF_SCOPE_RESPONSE
+    DISCLAIMER
 )
 from app.config import settings
 from app.utils.logger import logger
-from app.utils.guardrails import sanitize_text
 
 
 async def intake_node(state: LegalAgentState, llm) -> LegalAgentState:
     """
     Intake Node: Normalize input and attach context.
-    
-    This is the entry point for processing user input.
     """
     logger.info(f"Intake node processing: session={state['session_id']}")
+    
+    agent = IntakeAgent()
+    
+    # Run intake processing
+    result = await agent.process(
+        user_input=state["user_input"],
+        chat_history=state["chat_history"]
+    )
+    
+    if not result["valid"]:
+        state["response"] = result["error"] or "Please provide more details."
+        state["needs_clarification"] = True
+        
+        # Log failure
+        state["logs"].append({
+            "node": "intake",
+            "timestamp": datetime.utcnow().isoformat(),
+            "status": "invalid_input",
+            "error": result["error"]
+        })
+        
+        state["current_node"] = "end" 
+        return state
+        
+    # Update input with cleaned version
+    state["user_input"] = result["cleaned_input"]
     
     # Log node entry
     state["logs"].append({
         "node": "intake",
         "timestamp": datetime.utcnow().isoformat(),
-        "input": state["user_input"][:100]
+        "input_length": len(state["user_input"]),
+        "is_followup": result["is_followup"]
     })
-    
-    # Clean and normalize input
-    user_input = state["user_input"].strip()
-    
-    # Check for empty or too short input
-    if len(user_input) < 5:
-        state["response"] = "Could you please provide more details about your legal question?"
-        state["needs_clarification"] = True
-        state["current_node"] = "intake"
-        return state
-    
-    # Build context from chat history
-    context = _build_context(state["chat_history"])
     
     state["current_node"] = "classify"
     return state
@@ -65,13 +73,13 @@ async def classify_node(state: LegalAgentState, llm) -> LegalAgentState:
     """
     logger.info(f"Classify node processing: session={state['session_id']}")
     
-    classifier = ClassifierTool(llm)
+    agent = ClassifierAgent(llm)
     
-    # Build context from history
+    # Build context string for classifier
     context = _build_context(state["chat_history"])
     
     # Run classification
-    result = await classifier.run(
+    result = await agent.classify(
         user_input=state["user_input"],
         context=context
     )
@@ -85,18 +93,27 @@ async def classify_node(state: LegalAgentState, llm) -> LegalAgentState:
     )
     state["confidence"] = result.get("confidence", 0.0)
     
+    # Check if max clarification loops reached
+    loop_limit_reached = state["clarification_count"] >= settings.max_clarification_loops
+    
     # Determine if clarification needed
+    # Only if confidence is low AND we haven't asked too many questions
     state["needs_clarification"] = (
         state["confidence"] < settings.confidence_threshold and
-        state["clarification_count"] < settings.max_clarification_loops
+        not loop_limit_reached
     )
+    
+    if loop_limit_reached and state["confidence"] < settings.confidence_threshold:
+        logger.warning("Max clarification loops reached. Forcing retrieval with best guess.")
     
     # Log
     state["logs"].append({
         "node": "classify",
         "timestamp": datetime.utcnow().isoformat(),
         "classification": state["classification"],
-        "confidence": state["confidence"]
+        "confidence": state["confidence"],
+        "needs_clarification": state["needs_clarification"],
+        "loop_count": state["clarification_count"]
     })
     
     state["current_node"] = "clarify" if state["needs_clarification"] else "retrieve"
@@ -109,14 +126,20 @@ async def clarification_node(state: LegalAgentState, llm) -> LegalAgentState:
     """
     logger.info(f"Clarification node processing: session={state['session_id']}")
     
-    clarifier = ClarificationTool(llm)
+    agent = ClarificationAgent(llm)
+    
+    # Extract previously asked questions from history
+    asked_questions = _extract_asked_questions(state["chat_history"])
     
     # Generate question
-    question = await clarifier.run(
+    result = await agent.generate_question(
         missing_fields=state["classification"]["missing_fields"],
         classification=state["classification"],
-        user_input=state["user_input"]
+        user_input=state["user_input"],
+        asked_questions=asked_questions
     )
+    
+    question = result["question"]
     
     state["clarification_question"] = question
     state["clarification_count"] += 1
@@ -127,7 +150,7 @@ async def clarification_node(state: LegalAgentState, llm) -> LegalAgentState:
         "node": "clarify",
         "timestamp": datetime.utcnow().isoformat(),
         "question": question,
-        "count": state["clarification_count"]
+        "details": result
     })
     
     state["current_node"] = "end"
@@ -140,37 +163,42 @@ async def retrieve_node(state: LegalAgentState, llm) -> LegalAgentState:
     """
     logger.info(f"Retrieve node processing: session={state['session_id']}")
     
-    retriever = RetrieverTool()
-    
-    # Build search query
+    agent = RetrieverAgent()
     classification = state["classification"]
-    query = f"{classification['domain']} {classification['sub_domain']} procedure India"
     
-    # Retrieve documents
-    documents = await retriever.run(
-        query=query,
+    # Run retrieval
+    result = await agent.retrieve(
+        query=state["user_input"],
         domain=classification["domain"],
+        sub_domain=classification["sub_domain"],
         k=5
     )
     
-    state["retrieved_docs"] = documents
+    # Convert dict docs to TypedDict format
+    docs = []
+    for doc in result.get("documents", []):
+        docs.append(RetrievedDocument(
+            id=doc.get("id", ""),
+            content=doc.get("content", ""),
+            title=doc.get("title", ""),
+            section=doc.get("section", ""),
+            source_url=doc.get("source_url"),
+            score=doc.get("relevance_score", 0.0)
+        ))
+    
+    state["retrieved_docs"] = docs
     
     # Log
     state["logs"].append({
         "node": "retrieve",
         "timestamp": datetime.utcnow().isoformat(),
-        "query": query,
-        "doc_count": len(documents)
+        "doc_count": len(docs),
+        "query": result.get("query", "")
     })
     
     state["current_node"] = "respond"
     return state
 
-
-"""
-Agent Nodes (continued)
-LangGraph node implementations for the agent state machine.
-"""
 
 async def response_node(state: LegalAgentState, llm) -> LegalAgentState:
     """
@@ -179,33 +207,27 @@ async def response_node(state: LegalAgentState, llm) -> LegalAgentState:
     logger.info(f"Response node processing: session={state['session_id']}")
     
     try:
-        classification = state["classification"]
+        agent = ResponseAgent(llm)
         
-        # Format retrieved documents
-        legal_docs = _format_retrieved_docs(state["retrieved_docs"])
+        # Prepare retrieved docs in dict format expected by agent
+        # (Actually RetreiverAgent returns dicts, but we converted to TypedDict in state)
+        # We need to convert back or ensure agent handles it. 
+        # ResponseAgent expects List[Dict]. RetrievedDocument is a TypedDict (which is a dict at runtime).
+        # So passing state["retrieved_docs"] directly works.
         
-        # Format chat history
-        chat_history = _format_chat_history(state["chat_history"])
-        
-        # Build prompt
-        prompt = RESPONSE_PROMPT.format(
-            domain=classification["domain"],
-            sub_domain=classification["sub_domain"],
+        # Run generation
+        result = await agent.generate(
             user_input=state["user_input"],
-            legal_docs=legal_docs,
-            chat_history=chat_history
+            classification=state["classification"],
+            retrieved_docs=state["retrieved_docs"],
+            chat_history=state["chat_history"]
         )
         
-        messages = [
-            SystemMessage(content="You are a legal aid assistant providing procedural guidance for Indian citizens. Never give legal advice."),
-            HumanMessage(content=prompt)
-        ]
+        full_response = result["response"]
         
-        # Generate response
-        response = await llm.ainvoke(messages)
-        
-        # Add disclaimer
-        full_response = response.content.strip() + "\n\n" + DISCLAIMER
+        # Ensure disclaimer is present if agent didn't add it (it usually does or we add it)
+        if DISCLAIMER not in full_response:
+             full_response += f"\n\n{DISCLAIMER}"
         
         state["response"] = full_response
         
@@ -233,64 +255,61 @@ async def safety_node(state: LegalAgentState, llm) -> LegalAgentState:
     """
     logger.info(f"Safety node processing: session={state['session_id']}")
     
-    # Quick rule-based check first
-    quick_result = quick_safety_check(state["response"])
-    
-    if not quick_result["valid"]:
-        logger.warning(f"Quick safety check failed: {quick_result['violations']}")
-        state["response"] = sanitize_text(state["response"], quick_result["violations"])
-    
-    # LLM-based validation for thorough check
     try:
-        validator = SafetyValidatorTool(llm)
-        validation = await validator.run(state["response"])
+        agent = SafetyAgent(llm)
         
-        if not validation.get("valid", True):
-            logger.warning(f"LLM safety check failed: {validation.get('violations')}")
+        # Validate response
+        validation = await agent.validate(state["response"])
+        
+        if not validation["valid"]:
+            logger.warning(f"Safety check failed: {validation['violations']}")
             
-            # Replace with safe response
-            state["response"] = (
-                "I can only provide general procedural guidance. "
-                "For specific advice on your situation, please consult with a qualified legal professional.\n\n"
-                f"{DISCLAIMER}"
-            )
+            # Use sanitized response if available, or fallback
+            if validation.get("sanitized_response"):
+                state["response"] = validation["sanitized_response"]
+            else:
+                state["response"] = (
+                    "I can only provide general procedural guidance. "
+                    "For specific advice on your situation, please consult with a qualified legal professional.\n\n"
+                    f"{DISCLAIMER}"
+                )
         
         # Log
         state["logs"].append({
             "node": "safety",
             "timestamp": datetime.utcnow().isoformat(),
-            "quick_valid": quick_result["valid"],
-            "llm_valid": validation.get("valid", True)
+            "valid": validation["valid"],
+            "check_type": validation.get("check_type", "unknown")
         })
         
     except Exception as e:
         logger.error(f"Safety validation error: {str(e)}")
-        # On error, let response through but log it
+        # Log error but don't block
         state["logs"].append({
             "node": "safety",
             "timestamp": datetime.utcnow().isoformat(),
             "error": str(e)
         })
     
-    state["current_node"] = "end"
+    state["current_node"] = "memory" # Should go to memory node next, or end
+    # Graph definition says: Validate -> Memory -> END
     return state
 
 
 async def memory_node(state: LegalAgentState, llm) -> LegalAgentState:
     """
     Memory Node: Handle memory persistence.
-    This node is called at the end to manage session memory.
     """
     logger.info(f"Memory node processing: session={state['session_id']}")
     
-    # Memory persistence is handled in the API layer
-    # This node is for any memory-related transformations
-    
+    # Persistence is handled by API layer, this node logs completion
     state["logs"].append({
         "node": "memory",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
+        "status": "complete"
     })
     
+    state["current_node"] = "end"
     return state
 
 
@@ -331,34 +350,21 @@ def _build_context(chat_history: list) -> str:
     return "\n".join(context_parts)
 
 
-def _format_retrieved_docs(docs: list) -> str:
-    """Format retrieved documents for prompt."""
-    if not docs:
-        return "No specific legal documents retrieved."
-    
-    formatted = []
-    for i, doc in enumerate(docs[:3], 1):  # Limit to top 3
-        formatted.append(f"""
-Document {i}:
-- Source: {doc.get('act_name', 'Unknown Act')}
-- Section: {doc.get('section', 'N/A')}
-- Content: {doc.get('content', '')[:800]}
-""")
-    
-    return "\n".join(formatted)
-
-
-def _format_chat_history(history: list) -> str:
-    """Format chat history for prompt."""
-    if not history:
-        return "No previous conversation."
-    
-    formatted = []
-    for msg in history[-5:]:
-        role = "User" if msg.get("role") == "user" else "Assistant"
-        content = msg.get("content", "")[:300]
-        formatted.append(f"{role}: {content}")
-    
-    return "\n".join(formatted)
-
-
+def _extract_asked_questions(chat_history: list) -> List[str]:
+    """Extract previously asked questions from chat history."""
+    questions = []
+    if not chat_history:
+        return questions
+        
+    for msg in chat_history:
+        if msg.get("role") == "assistant":
+            content = msg.get("content", "")
+            # Simple heuristic: if it ends with '?' or was a clarification (check metadata if available)
+            # Since we maintain 'needs_clarification' in metadata now, check that first
+            meta = msg.get("metadata", {})
+            if meta.get("needs_clarification"):
+                questions.append(content)
+            elif "?" in content:
+                questions.append(content)
+                
+    return questions
