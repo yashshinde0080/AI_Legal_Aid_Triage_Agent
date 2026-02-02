@@ -3,9 +3,12 @@ Authentication API Endpoints
 Handles user authentication via Supabase Auth.
 """
 
+import time
+from datetime import datetime
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from pydantic import BaseModel, EmailStr
-from typing import Optional
 
 from app.db.supabase import get_supabase_client
 from app.utils.logger import logger
@@ -43,10 +46,11 @@ class UserResponse(BaseModel):
     created_at: str
 
 
-async def get_current_user(authorization: str = Header(...)) -> dict:
+def get_current_user(authorization: str = Header(...)) -> dict:
     """
     Dependency to get current authenticated user from JWT.
     Validates the Supabase JWT token.
+    Uses sync def to run in threadpool as Supabase client is synchronous.
     """
     if not authorization.startswith("Bearer "):
         raise HTTPException(
@@ -56,31 +60,46 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
     
     token = authorization.replace("Bearer ", "")
     
-    try:
-        client = get_supabase_client()
-        user_response = client.auth.get_user(token)
-        
-        if not user_response or not user_response.user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token"
-            )
-        
-        return {
-            "id": user_response.user.id,
-            "email": user_response.user.email,
-            "full_name": user_response.user.user_metadata.get("full_name")
-        }
-    except Exception as e:
-        logger.error(f"Authentication error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication failed"
-        )
+    # Retry mechanism for Supabase connection (SSL handshake timeouts)
+    max_retries = 3
+    last_exception = None
+    
+    for attempt in range(max_retries):
+        try:
+            client = get_supabase_client()
+            # client.auth.get_user creates a network request using httpx (sync)
+            user_response = client.auth.get_user(token)
+            
+            if not user_response or not user_response.user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid or expired token"
+                )
+            
+            return {
+                "id": user_response.user.id,
+                "email": user_response.user.email,
+                "full_name": user_response.user.user_metadata.get("full_name")
+            }
+        except HTTPException:
+            # If it's an HTTP exception (e.g. 401 from supabase), re-raise immediately
+            raise
+        except Exception as e:
+            last_exception = e
+            # Log warning and retry if it's a network error
+            if attempt < max_retries - 1:
+                logger.warning(f"Authentication attempt {attempt + 1}/{max_retries} failed: {str(e)}")
+                time.sleep(0.5)  # Short backoff
+    
+    logger.error(f"Authentication final error: {str(last_exception)}")
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication failed"
+    )
 
 
 @router.post("/signup", response_model=AuthResponse)
-async def signup(request: SignupRequest):
+def signup(request: SignupRequest):
     """
     Register a new user.
     Creates user in Supabase Auth.
@@ -119,7 +138,7 @@ async def signup(request: SignupRequest):
 
 
 @router.post("/login", response_model=AuthResponse)
-async def login(request: LoginRequest):
+def login(request: LoginRequest):
     """
     Authenticate existing user.
     Returns JWT tokens for subsequent requests.
@@ -153,7 +172,7 @@ async def login(request: LoginRequest):
 
 
 @router.post("/logout")
-async def logout(user: dict = Depends(get_current_user)):
+def logout(user: dict = Depends(get_current_user)):
     """
     Logout current user.
     Invalidates the current session.
@@ -168,7 +187,7 @@ async def logout(user: dict = Depends(get_current_user)):
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_me(user: dict = Depends(get_current_user)):
+def get_me(user: dict = Depends(get_current_user)):
     """
     Get current user information.
     Requires valid JWT token.
@@ -179,6 +198,3 @@ async def get_me(user: dict = Depends(get_current_user)):
         full_name=user.get("full_name"),
         created_at=datetime.utcnow().isoformat()
     )
-
-
-from datetime import datetime

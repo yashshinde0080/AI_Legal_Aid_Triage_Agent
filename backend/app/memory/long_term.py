@@ -6,12 +6,13 @@ Persistent storage of conversation history in Supabase.
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import uuid
+import time
 
 from app.db.supabase import get_supabase_client, get_service_client
 from app.utils.logger import logger
 
 
-async def save_message(
+def save_message(
     session_id: str,
     role: str,
     content: str,
@@ -54,7 +55,7 @@ async def save_message(
         raise
 
 
-async def get_session_messages(
+def get_session_messages(
     session_id: str,
     limit: int = 50,
     offset: int = 0
@@ -70,25 +71,32 @@ async def get_session_messages(
     Returns:
         List of messages
     """
-    try:
-        client = get_service_client()
-        
-        result = client.table("chat_messages").select(
-            "id, role, content, metadata, created_at"
-        ).eq(
-            "session_id", session_id
-        ).order(
-            "created_at", desc=False
-        ).range(offset, offset + limit - 1).execute()
-        
-        return result.data or []
-        
-    except Exception as e:
-        logger.error(f"Get messages error: {str(e)}")
-        return []
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            client = get_service_client()
+            
+            result = client.table("chat_messages").select(
+                "id, role, content, metadata, created_at"
+            ).eq(
+                "session_id", session_id
+            ).order(
+                "created_at", desc=False
+            ).range(offset, offset + limit - 1).execute()
+            
+            return result.data or []
+            
+        except Exception as e:
+            if attempt < max_retries - 1:
+                logger.warning(f"Get messages attempt {attempt + 1} failed: {str(e)}")
+                time.sleep(0.5)
+            else:
+                logger.error(f"Get messages final error: {str(e)}")
+                return []
+    return []
 
 
-async def get_session_summary(session_id: str) -> Optional[str]:
+def get_session_summary(session_id: str) -> Optional[str]:
     """
     Get the summary for a session.
     
@@ -114,7 +122,7 @@ async def get_session_summary(session_id: str) -> Optional[str]:
         return None
 
 
-async def update_session_summary(session_id: str, summary: str) -> bool:
+def update_session_summary(session_id: str, summary: str) -> bool:
     """
     Update the summary for a session.
     
@@ -140,7 +148,7 @@ async def update_session_summary(session_id: str, summary: str) -> bool:
         return False
 
 
-async def delete_session_messages(session_id: str) -> int:
+def delete_session_messages(session_id: str) -> int:
     """
     Delete all messages for a session.
     
@@ -164,7 +172,7 @@ async def delete_session_messages(session_id: str) -> int:
         return 0
 
 
-async def get_message_count(session_id: str) -> int:
+def get_message_count(session_id: str) -> int:
     """
     Get the number of messages in a session.
     
@@ -178,7 +186,7 @@ async def get_message_count(session_id: str) -> int:
         client = get_service_client()
         
         result = client.table("chat_messages").select(
-            "id", count="exact"
+            "id, count='exact'"
         ).eq("session_id", session_id).execute()
         
         return result.count or 0

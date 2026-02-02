@@ -1,5 +1,5 @@
 'use client'
-import { Logo } from '@/components/logo'
+import { LogoIcon } from '@/components/logo'
 import { Activity, Map as MapIcon, MessageCircle } from 'lucide-react'
 import DottedMap from 'dotted-map'
 import { Area, AreaChart, CartesianGrid } from 'recharts'
@@ -50,7 +50,7 @@ export default function FeaturesSection() {
                         <div>
                             <div className="flex items-center gap-2">
                                 <span className="flex size-5 rounded-full border">
-                                    <Logo className="m-auto size-3" />
+                                    <LogoIcon className="m-auto size-3 [&>svg]:!size-full" />
                                 </span>
                                 <span className="text-muted-foreground text-xs">System</span>
                             </div>
@@ -114,23 +114,23 @@ const Map = () => {
 }
 
 const chartConfig = {
-    desktop: {
-        label: 'Desktop',
+    events: {
+        label: 'Logged Events',
         color: '#2563eb',
     },
-    mobile: {
-        label: 'Mobile',
+    alerts: {
+        label: 'Safety Alerts',
         color: '#60a5fa',
     },
 } satisfies ChartConfig
 
 const chartData = [
-    { month: 'May', desktop: 56, mobile: 224 },
-    { month: 'June', desktop: 56, mobile: 224 },
-    { month: 'January', desktop: 126, mobile: 252 },
-    { month: 'February', desktop: 205, mobile: 410 },
-    { month: 'March', desktop: 200, mobile: 126 },
-    { month: 'April', desktop: 400, mobile: 800 },
+    { month: 'May', events: 56, alerts: 24 },
+    { month: 'June', events: 120, alerts: 45 },
+    { month: 'January', events: 250, alerts: 80 },
+    { month: 'February', events: 400, alerts: 120 },
+    { month: 'March', events: 200, alerts: 50 },
+    { month: 'April', events: 600, alerts: 100 },
 ]
 
 const MonitoringChart = () => {
@@ -147,36 +147,36 @@ const MonitoringChart = () => {
                 }}>
                 <defs>
                     <linearGradient
-                        id="fillDesktop"
+                        id="fillEvents"
                         x1="0"
                         y1="0"
                         x2="0"
                         y2="1">
                         <stop
                             offset="0%"
-                            stopColor="var(--color-desktop)"
+                            stopColor="var(--color-events)"
                             stopOpacity={0.8}
                         />
                         <stop
                             offset="55%"
-                            stopColor="var(--color-desktop)"
+                            stopColor="var(--color-events)"
                             stopOpacity={0.1}
                         />
                     </linearGradient>
                     <linearGradient
-                        id="fillMobile"
+                        id="fillAlerts"
                         x1="0"
                         y1="0"
                         x2="0"
                         y2="1">
                         <stop
                             offset="0%"
-                            stopColor="var(--color-mobile)"
+                            stopColor="var(--color-alerts)"
                             stopOpacity={0.8}
                         />
                         <stop
                             offset="55%"
-                            stopColor="var(--color-mobile)"
+                            stopColor="var(--color-alerts)"
                             stopOpacity={0.1}
                         />
                     </linearGradient>
@@ -189,20 +189,20 @@ const MonitoringChart = () => {
                 />
                 <Area
                     strokeWidth={2}
-                    dataKey="mobile"
+                    dataKey="alerts"
                     type="stepBefore"
-                    fill="url(#fillMobile)"
+                    fill="url(#fillAlerts)"
                     fillOpacity={0.1}
-                    stroke="var(--color-mobile)"
+                    stroke="var(--color-alerts)"
                     stackId="a"
                 />
                 <Area
                     strokeWidth={2}
-                    dataKey="desktop"
+                    dataKey="events"
                     type="stepBefore"
-                    fill="url(#fillDesktop)"
+                    fill="url(#fillEvents)"
                     fillOpacity={0.1}
-                    stroke="var(--color-desktop)"
+                    stroke="var(--color-events)"
                     stackId="a"
                 />
             </AreaChart>

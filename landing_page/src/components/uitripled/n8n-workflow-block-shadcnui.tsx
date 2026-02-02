@@ -41,47 +41,74 @@ const initialNodes: WorkflowNode[] = [
   {
     id: "node-1",
     type: "trigger",
-    title: "User Input",
-    description: "Citizen describes legal issue",
+    title: "User Input Message",
+    description: "Start Loop",
     icon: Mail,
     color: "emerald",
-    position: { x: 50, y: 150 },
+    position: { x: 20, y: 100 },
   },
   {
     id: "node-2",
     type: "action",
-    title: "Issue Classification",
-    description: "Determine domain & sub-domain",
-    icon: Database,
+    title: "Classifier Agent",
+    description: "Analyzes for missing entities",
+    icon: Webhook,
     color: "blue",
-    position: { x: 300, y: 150 },
+    position: { x: 260, y: 100 },
   },
   {
     id: "node-3",
     type: "condition",
-    title: "Confidence > 0.7?",
-    description: "Is the issue clear enough?",
+    title: "Is Info Missing?",
+    description: "Check for required fields",
     icon: Settings,
     color: "amber",
-    position: { x: 550, y: 150 },
+    position: { x: 500, y: 100 },
   },
   {
     id: "node-4",
     type: "action",
-    title: "RAG Retrieval",
+    title: "Retriever Agent",
     description: "Fetch laws from pgvector",
     icon: Database,
     color: "purple",
-    position: { x: 800, y: 150 },
+    position: { x: 740, y: 100 },
   },
   {
     id: "node-5",
     type: "action",
+    title: "Response Generation",
+    description: "Generate final answer",
+    icon: Mail,
+    color: "emerald",
+    position: { x: 980, y: 100 },
+  },
+  {
+    id: "node-6",
+    type: "condition",
+    title: "Check Safety Counter",
+    description: "Is Count < MAX_LOOPS?",
+    icon: Settings,
+    color: "amber",
+    position: { x: 500, y: 250 },
+  },
+  {
+    id: "node-7",
+    type: "action",
     title: "Clarification Agent",
-    description: "Ask missing questions",
+    description: "Generate Question",
     icon: Webhook,
     color: "indigo",
-    position: { x: 800, y: 10 },
+    position: { x: 500, y: 400 },
+  },
+  {
+    id: "node-8",
+    type: "trigger",
+    title: "Wait For User",
+    description: "User answers question",
+    icon: Mail,
+    color: "emerald",
+    position: { x: 740, y: 400 },
   },
 ];
 
@@ -89,7 +116,12 @@ const initialConnections: WorkflowConnection[] = [
   { from: "node-1", to: "node-2" },
   { from: "node-2", to: "node-3" },
   { from: "node-3", to: "node-4" },
-  { from: "node-3", to: "node-5" },
+  { from: "node-3", to: "node-6" },
+  { from: "node-6", to: "node-4" },
+  { from: "node-6", to: "node-7" },
+  { from: "node-7", to: "node-8" },
+  { from: "node-8", to: "node-4" },
+  { from: "node-4", to: "node-5" },
 ];
 
 const colorClasses: Record<string, string> = {
@@ -218,8 +250,8 @@ export function N8nWorkflowBlock() {
       {/* Canvas */}
       <div
         ref={canvasRef}
-        className="relative h-[400px] w-full overflow-auto rounded-xl border border-border/30 bg-background/40 sm:h-[500px] md:h-[600px]"
-        style={{ minHeight: "400px" }}
+        className="relative h-[600px] w-full overflow-hidden rounded-xl border border-border/30 bg-background/40"
+        style={{ minHeight: "600px" }}
         role="region"
         aria-label="Workflow canvas"
         tabIndex={0}

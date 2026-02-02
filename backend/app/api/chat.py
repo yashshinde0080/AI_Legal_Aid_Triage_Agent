@@ -4,6 +4,7 @@ Main chat endpoint for the legal triage agent.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
@@ -65,6 +66,60 @@ class SessionResponse(BaseModel):
     message_count: int
 
 
+def create_new_session(user_id: str) -> str:
+    """Create a new chat session for the user."""
+    try:
+        client = get_service_client()
+        session_id = str(uuid.uuid4())
+        
+        client.table("chat_sessions").insert({
+            "id": session_id,
+            "user_id": user_id,
+            "title": "New Conversation",
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat()
+        }).execute()
+        
+        return session_id
+    except Exception as e:
+        logger.error(f"Session creation error: {str(e)}")
+        raise
+
+
+def validate_session_ownership(session_id: str, user_id: str):
+    """Validate that the session belongs to the user."""
+    try:
+        client = get_service_client()
+        result = client.table("chat_sessions").select("user_id").eq(
+            "id", session_id
+        ).single().execute()
+        
+        if not result.data or result.data["user_id"] != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Session not found or access denied"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Session validation error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session not found"
+        )
+
+
+def update_session_timestamp(session_id: str):
+    """Update the session's last updated timestamp."""
+    try:
+        client = get_service_client()
+        client.table("chat_sessions").update({
+            "updated_at": datetime.utcnow().isoformat()
+        }).eq("id", session_id).execute()
+    except Exception as e:
+        logger.error(f"Session update error: {str(e)}")
+
+
 @router.post("", response_model=ChatResponse)
 async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
     """
@@ -75,13 +130,14 @@ async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
         # Get or create session
         session_id = request.session_id
         if not session_id:
-            session_id = await create_new_session(user["id"])
+            session_id = await run_in_threadpool(create_new_session, user["id"])
         
         # Validate session belongs to user
-        await validate_session_ownership(session_id, user["id"])
+        await run_in_threadpool(validate_session_ownership, session_id, user["id"])
         
         # Get chat history for context
-        chat_history = await get_session_messages(
+        chat_history = await run_in_threadpool(
+            get_session_messages,
             session_id, 
             limit=settings.max_context_messages
         )
@@ -101,12 +157,15 @@ async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
         result = await run_agent(state, llm_provider)
         
         # Save messages to memory
-        await save_message(
+        await run_in_threadpool(
+            save_message,
             session_id=session_id,
             role="user",
             content=request.message
         )
-        await save_message(
+        
+        await run_in_threadpool(
+            save_message,
             session_id=session_id,
             role="assistant",
             content=result["response"],
@@ -118,7 +177,7 @@ async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
         )
         
         # Update session timestamp
-        await update_session_timestamp(session_id)
+        await run_in_threadpool(update_session_timestamp, session_id)
         
         # Format source documents
         sources = []
@@ -151,57 +210,3 @@ async def chat(request: ChatRequest, user: dict = Depends(get_current_user)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred processing your request: {str(e)}"
         )
-
-
-async def create_new_session(user_id: str) -> str:
-    """Create a new chat session for the user."""
-    try:
-        client = get_service_client()
-        session_id = str(uuid.uuid4())
-        
-        client.table("chat_sessions").insert({
-            "id": session_id,
-            "user_id": user_id,
-            "title": "New Conversation",
-            "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat()
-        }).execute()
-        
-        return session_id
-    except Exception as e:
-        logger.error(f"Session creation error: {str(e)}")
-        raise
-
-
-async def validate_session_ownership(session_id: str, user_id: str):
-    """Validate that the session belongs to the user."""
-    try:
-        client = get_service_client()
-        result = client.table("chat_sessions").select("user_id").eq(
-            "id", session_id
-        ).single().execute()
-        
-        if not result.data or result.data["user_id"] != user_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Session not found or access denied"
-            )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Session validation error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Session not found"
-        )
-
-
-async def update_session_timestamp(session_id: str):
-    """Update the session's last updated timestamp."""
-    try:
-        client = get_service_client()
-        client.table("chat_sessions").update({
-            "updated_at": datetime.utcnow().isoformat()
-        }).eq("id", session_id).execute()
-    except Exception as e:
-        logger.error(f"Session update error: {str(e)}")

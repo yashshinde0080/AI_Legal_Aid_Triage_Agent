@@ -41,7 +41,7 @@ class MessageResponse(BaseModel):
 
 
 @router.get("", response_model=List[SessionResponse])
-async def list_sessions(user: dict = Depends(get_current_user)):
+def list_sessions(user: dict = Depends(get_current_user)):
     """
     List all chat sessions for the current user.
     Returns sessions ordered by last updated.
@@ -93,7 +93,7 @@ async def list_sessions(user: dict = Depends(get_current_user)):
 
 
 @router.get("/{session_id}", response_model=SessionResponse)
-async def get_session(session_id: str, user: dict = Depends(get_current_user)):
+def get_session(session_id: str, user: dict = Depends(get_current_user)):
     """
     Get a specific chat session.
     """
@@ -134,7 +134,7 @@ async def get_session(session_id: str, user: dict = Depends(get_current_user)):
 
 
 @router.get("/{session_id}/messages", response_model=List[MessageResponse])
-async def get_session_messages(
+def get_session_messages(
     session_id: str, 
     user: dict = Depends(get_current_user),
     limit: int = 50,
@@ -186,7 +186,7 @@ async def get_session_messages(
 
 
 @router.put("/{session_id}", response_model=SessionResponse)
-async def update_session(
+def update_session(
     session_id: str,
     request: SessionUpdateRequest,
     user: dict = Depends(get_current_user)
@@ -233,7 +233,7 @@ async def update_session(
 
 
 @router.delete("/{session_id}")
-async def delete_session(session_id: str, user: dict = Depends(get_current_user)):
+def delete_session(session_id: str, user: dict = Depends(get_current_user)):
     """
     Delete a chat session and all its messages.
     """
