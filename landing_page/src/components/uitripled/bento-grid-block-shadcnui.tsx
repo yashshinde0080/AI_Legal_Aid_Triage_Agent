@@ -6,10 +6,7 @@ import { ArrowUpRight, PlayCircle, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-interface AvatarProfile {
-  src: string;
-  alt: string;
-}
+
 
 interface Metric {
   label: string;
@@ -31,51 +28,36 @@ interface ReelStat {
   label: string;
 }
 
-const avatarProfiles: AvatarProfile[] = [
-  {
-    src: "https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=200&h=200&fit=crop&q=80",
-    alt: "Portrait of a motion designer smiling at the camera",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200&h=200&fit=crop&q=80",
-    alt: "Portrait of a product strategist in a studio",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&h=200&fit=crop&q=80",
-    alt: "Portrait of a UX researcher wearing headphones",
-  },
-];
-
 const keyMetrics: Metric[] = [
   {
-    label: "Project satisfaction",
-    value: "98%",
-    caption: "Last quarter",
+    label: "Procedural accuracy",
+    value: "99%",
+    caption: "Against golden set",
   },
   {
-    label: "Delivery cadence",
-    value: "2.4x",
-    caption: "Faster",
+    label: "Response latency",
+    value: "<2s",
+    caption: "Streamed output",
   },
   {
-    label: "Retention rate",
-    value: "92%",
-    caption: "After 6 months",
+    label: "Auditability",
+    value: "100%",
+    caption: "Every step logged",
   },
 ];
 
 const motionProcess: ProcessStep[] = [
   {
-    label: "Ideate & storyboard",
-    progress: 82,
+    label: "Intake & Classification",
+    progress: 100,
   },
   {
-    label: "Motion exploration",
-    progress: 64,
+    label: "RAG Retrieval",
+    progress: 100,
   },
   {
-    label: "Polish & delivery",
-    progress: 91,
+    label: "Safety Validation",
+    progress: 100,
   },
 ];
 
@@ -99,9 +81,9 @@ const inspirationGallery: GalleryImage[] = [
 ];
 
 const reelStats: ReelStat[] = [
-  { label: "3:42 min" },
-  { label: "4.2K views" },
-  { label: "Dynamic timing curves" },
+  { label: "IPC" },
+  { label: "Consumer Law" },
+  { label: "Labour Laws" },
 ];
 
 const sectionVariants: Variants = {
@@ -143,19 +125,18 @@ export function BentoGridBlock() {
             variant="outline"
             className="inline-flex items-center gap-2 rounded-full border-border/50 bg-background/60 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-foreground/70 backdrop-blur"
           >
-            UI TripleD
+            System Capabilities
             <span
               className="h-2 w-2 rounded-full bg-primary"
               aria-hidden="true"
             />
           </Badge>
           <h2 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl lg:text-5xl">
-            Bento storytelling built for modern motion systems
+            Reliable, explainable, and secure legal triage
           </h2>
           <p className="max-w-2xl text-base text-foreground/70 md:text-lg">
-            Pair narrative, metrics, and cinematic visuals inside a responsive
-            layout designed around Framer Motion micro-interactions and
-            accessible navigation.
+            Explore the core components that make this agentic system robust.
+            From semantic search to LangGraph state management, every module is designed for accuracy.
           </p>
         </motion.header>
 
@@ -193,43 +174,23 @@ export function BentoGridBlock() {
                   variant="secondary"
                   className="w-fit rounded-full border-border/40 bg-background/80 px-3 py-1 text-xs uppercase tracking-[0.2em] text-foreground/70"
                 >
-                  Featured case study
+                  Core Feature
                 </Badge>
                 <h3 className="text-2xl font-semibold leading-tight text-foreground md:text-3xl">
-                  Designing delightful product experiences
+                  Conversational Intelligence
                 </h3>
                 <p className="text-sm text-foreground/70 md:text-base">
-                  We choreograph micro-interactions and depth cues that elevate
-                  usability across every product surface-without sacrificing
-                  performance or accessibility.
+                  The agent uses LangChain's memory modules to maintain context throughout the entire session.
+                  It knows what you said five turns ago, ensuring a natural and efficient triage process.
                 </p>
               </div>
               <div className="mt-8 flex items-center justify-between gap-4">
-                <div
-                  className="flex -space-x-3"
-                  role="list"
-                  aria-label="Project team avatars"
-                >
-                  {avatarProfiles.map((profile) => (
-                    <div
-                      key={profile.src}
-                      role="listitem"
-                      className="relative h-11 w-11 overflow-hidden rounded-full border border-border/50 bg-background/80 transition-transform duration-300 group-hover:scale-[1.04]"
-                    >
-                      <img
-                        src={profile.src}
-                        alt={profile.alt}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
                 <Button
                   variant="ghost"
                   className="group/cta gap-2 rounded-lg bg-background/70 px-4 py-2 text-sm text-foreground hover:bg-background/80"
-                  aria-label="View the featured case study"
+                  aria-label="View architecture"
                 >
-                  View story
+                  View Architecture
                   <ArrowUpRight className="h-4 w-4 transition-transform group-hover/cta:translate-x-1" />
                 </Button>
               </div>
@@ -300,18 +261,17 @@ export function BentoGridBlock() {
                 variant="outline"
                 className="w-fit rounded-full border-border/60 bg-background/80 px-3 py-1 text-xs uppercase tracking-[0.2em] text-foreground/70"
               >
-                Behind the scenes
+                RAG Technology
               </Badge>
               <h3 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
-                Immersive motion prototypes with cinematic lighting
+                Verified Legal Sources via Vector Search
               </h3>
               <p className="max-w-sm text-sm text-foreground/70 md:text-base">
-                Layered light, shadow, and depth cues help teams experience the
-                product as it will ship-well before the first line of production
-                code.
+                We leverage pgvector to perform semantic search over a curated database
+                of official legal documents. The agent cites the exact section of the law.
               </p>
               <div className="flex flex-wrap gap-2 pt-2">
-                {["Micro-interactions", "Depth cues", "Narrative flow"].map(
+                {["Embeddings", "Vector DB", "Source Citation"].map(
                   (tag) => (
                     <span
                       key={tag}
@@ -338,15 +298,14 @@ export function BentoGridBlock() {
                 variant="outline"
                 className="w-fit rounded-full border-primary/50 bg-background/70 px-3 py-1 text-xs uppercase tracking-[0.2em] text-primary"
               >
-                Motion sprint
+                Triage Flow
               </Badge>
               <h3 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
-                From first sketch to polished prototype in seven days
+                From user input to actionable guidance
               </h3>
               <p className="text-sm text-foreground/70 md:text-base">
-                We compress discovery, exploration, and refinement into a
-                focused week-long sprint so your team can feel the flow of the
-                final experience sooner.
+                The agent parses your issue, classifies it into a legal domain,
+                retrieves relevant procedures, and validates the response for safety.
               </p>
             </div>
             <div className="mt-6 space-y-4">
@@ -401,11 +360,11 @@ export function BentoGridBlock() {
               <div className="relative flex h-full flex-col justify-between bg-gradient-to-br from-background/90 via-background/70 to-transparent p-6 md:p-8">
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <Badge
+                  <Badge
                       variant="outline"
                       className="w-fit rounded-full border-border/50 bg-background/70 px-3 py-1 text-xs uppercase tracking-[0.2em] text-foreground/70"
                     >
-                      Motion showcase
+                      Safety Guardrails
                     </Badge>
                     <motion.div
                       animate={{ scale: [1, 1.1, 1] }}
@@ -423,12 +382,11 @@ export function BentoGridBlock() {
                     </motion.div>
                   </div>
                   <h3 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
-                    Watch our latest animation breakdown
+                    Strict adherence to procedural guidance
                   </h3>
                   <p className="max-w-md text-sm text-foreground/70 md:text-base">
-                    A three-minute deep dive into timing curves, coordinated
-                    transitions, and how we translate component choreography
-                    into production-ready systems.
+                    The agent is programmed to never provide legal advice. It strictly
+                    refuses requests for predictions, strategy, or lawyer recommendations.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-4 text-xs text-foreground/60">
@@ -464,15 +422,14 @@ export function BentoGridBlock() {
                 variant="outline"
                 className="w-fit rounded-full border-border/50 bg-background/70 px-3 py-1 text-xs uppercase tracking-[0.2em] text-foreground/60"
               >
-                Visual research
+                Transparent Logging
               </Badge>
               <h3 className="text-lg font-semibold tracking-tight text-foreground md:text-xl">
-                Capturing texture, light, and pace for new explorations
+                Full audit trail of every agent decision
               </h3>
               <p className="text-sm text-foreground/70 md:text-base">
-                A snapshot of the references that steer our motion language and
-                narrative rhythm, curated for both product and marketing
-                surfaces.
+                Every step—from classification to retrieval—is logged in Supabase.
+                This ensures accountability and allows for continuous system improvement.
               </p>
             </div>
             <div className="mt-6 grid grid-cols-2 gap-3">

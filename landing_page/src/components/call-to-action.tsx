@@ -6,8 +6,8 @@ export default function CallToAction() {
         <section className="py-16 md:py-32">
             <div className="mx-auto max-w-5xl px-6">
                 <div className="text-center">
-                    <h2 className="text-balance text-4xl font-semibold lg:text-5xl">Start Building</h2>
-                    <p className="mt-4">Libero sapiente aliquam quibusdam aspernatur.</p>
+                    <h2 className="text-balance text-4xl font-semibold lg:text-5xl">Ready to Find Legal Clarity?</h2>
+                    <p className="mt-4">Start a session with the AI agent to get instant, verified procedural guidance.</p>
 
                     <form
                         action=""

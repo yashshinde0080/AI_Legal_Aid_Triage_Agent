@@ -13,10 +13,10 @@ export default function FeaturesSection() {
                     <div className="p-6 sm:p-12">
                         <span className="text-muted-foreground flex items-center gap-2">
                             <MapIcon className="size-4" />
-                            Real time location tracking
+                            Stateful Conversation Memory
                         </span>
 
-                        <p className="mt-8 text-2xl font-semibold">Advanced tracking system, Instantly locate all your assets.</p>
+                        <p className="mt-8 text-2xl font-semibold">Remembers context across the entire session. No more repeating facts.</p>
                     </div>
 
                     <div
@@ -24,7 +24,7 @@ export default function FeaturesSection() {
                         className="relative">
                         <div className="absolute inset-0 z-10 m-auto size-fit">
                             <div className="rounded-(--radius) bg-background z-1 dark:bg-muted relative flex size-fit w-fit items-center gap-2 border px-3 py-1 text-xs font-medium shadow-md shadow-zinc-950/5">
-                                <span className="text-lg">🇨🇩</span> Last connection from DR Congo
+                                <span className="text-lg">⚖️</span> Jurisdiction: Civil Law
                             </div>
                             <div className="rounded-(--radius) bg-background absolute inset-2 -bottom-2 mx-auto border px-3 py-4 text-xs font-medium shadow-md shadow-zinc-950/5 dark:bg-zinc-900"></div>
                         </div>
@@ -39,10 +39,10 @@ export default function FeaturesSection() {
                     <div className="relative z-10">
                         <span className="text-muted-foreground flex items-center gap-2">
                             <MessageCircle className="size-4" />
-                            Email and web support
+                            AI Issue Classification
                         </span>
 
-                        <p className="my-8 text-2xl font-semibold">Reach out via email or web for any assistance you need.</p>
+                        <p className="my-8 text-2xl font-semibold">Deep analysis of user queries to identify specific legal domains.</p>
                     </div>
                     <div
                         aria-hidden
@@ -52,29 +52,29 @@ export default function FeaturesSection() {
                                 <span className="flex size-5 rounded-full border">
                                     <Logo className="m-auto size-3" />
                                 </span>
-                                <span className="text-muted-foreground text-xs">Sat 22 Feb</span>
+                                <span className="text-muted-foreground text-xs">System</span>
                             </div>
-                            <div className="rounded-(--radius) bg-background mt-1.5 w-3/5 border p-3 text-xs">Hey, I'm having trouble with my account.</div>
+                            <div className="rounded-(--radius) bg-background mt-1.5 w-3/5 border p-3 text-xs">Which state did the purchase occur in?</div>
                         </div>
 
                         <div>
-                            <div className="rounded-(--radius) mb-1 ml-auto w-3/5 bg-blue-600 p-3 text-xs text-white">Molestiae numquam debitis et ullam distinctio provident nobis repudiandae deleniti necessitatibus.</div>
-                            <span className="text-muted-foreground block text-right text-xs">Now</span>
+                            <div className="rounded-(--radius) mb-1 ml-auto w-3/5 bg-blue-600 p-3 text-xs text-white">Maharashtra, last Tuesday.</div>
+                            <span className="text-muted-foreground block text-right text-xs">User</span>
                         </div>
                     </div>
                 </div>
                 <div className="col-span-full border-y p-12">
-                    <p className="text-center text-4xl font-semibold lg:text-7xl">99.99% Uptime</p>
+                    <p className="text-center text-4xl font-semibold lg:text-7xl">100% Auditable Log</p>
                 </div>
                 <div className="relative col-span-full">
                     <div className="absolute z-10 max-w-lg px-6 pr-12 pt-6 md:px-12 md:pt-12">
                         <span className="text-muted-foreground flex items-center gap-2">
                             <Activity className="size-4" />
-                            Activity feed
+                            Guardrails & Safety
                         </span>
 
                         <p className="my-8 text-2xl font-semibold">
-                            Monitor your application's activity in real-time. <span className="text-muted-foreground"> Instantly identify and resolve issues.</span>
+                            Strict safety checks on every output. <span className="text-muted-foreground"> Procedural guidance only, no legal advice.</span>
                         </p>
                     </div>
                     <MonitoringChart />

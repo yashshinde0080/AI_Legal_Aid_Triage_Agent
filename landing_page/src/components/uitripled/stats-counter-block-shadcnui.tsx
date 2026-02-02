@@ -9,37 +9,37 @@ import { useEffect, useRef, useState } from "react";
 const stats = [
   {
     icon: Users,
-    value: 50000,
+    value: 2000,
     suffix: "+",
-    label: "Active Users",
-    description: "Growing community worldwide",
+    label: "Verified Laws",
+    description: "Indexed from official gazettes",
     bgColor: "bg-blue-500/10",
     iconColor: "text-blue-500",
   },
   {
     icon: Globe,
-    value: 120,
+    value: 15,
     suffix: "+",
-    label: "Countries",
-    description: "Global reach and presence",
+    label: "Legal Domains",
+    description: "Covering civil, criminal, and corporate",
     bgColor: "bg-green-500/10",
     iconColor: "text-green-500",
   },
   {
     icon: TrendingUp,
-    value: 98,
+    value: 99,
     suffix: "%",
-    label: "Satisfaction Rate",
-    description: "Customer happiness score",
+    label: "Procedural Accuracy",
+    description: "Strict RAG-based responses",
     bgColor: "bg-purple-500/10",
     iconColor: "text-purple-500",
   },
   {
     icon: Award,
-    value: 25,
-    suffix: "+",
-    label: "Awards Won",
-    description: "Industry recognition",
+    value: 100,
+    suffix: "%",
+    label: "Audit Logs",
+    description: "Every step traceable",
     bgColor: "bg-orange-500/10",
     iconColor: "text-orange-500",
   },
@@ -199,10 +199,9 @@ export function StatsCounterBlock() {
         >
           <blockquote className="mx-auto max-w-2xl">
             <p className="mb-4 text-lg font-medium italic text-muted-foreground md:text-xl">
-              &quot;These numbers represent real people, real businesses, and
-              real success stories. We&apos;re just getting started.&quot;
+              &quot;This framework ensures that every citizen gets accurate, verified procedural guidance—closing the gap between confusion and legal action.&quot;
             </p>
-            <footer className="text-sm font-semibold">- Our CEO</footer>
+            <footer className="text-sm font-semibold">- System Architect</footer>
           </blockquote>
         </motion.div>
       </div>

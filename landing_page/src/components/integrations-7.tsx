@@ -1,4 +1,4 @@
-import { Gemini, Replit, MagicUI, VSCodium, MediaWiki, GooglePaLM } from '@/components/logos'
+import { FastAPI, LangChain, Supabase, HuggingFace, Python, OpenAI, Gemini } from '@/components/logos'
 import { LogoIcon } from '@/components/logo'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -19,23 +19,23 @@ export default function IntegrationsSection() {
                                 gap={24}
                                 speed={20}
                                 speedOnHover={10}>
-                                <IntegrationCard>
-                                    <VSCodium />
+                                <IntegrationCard label="FastAPI">
+                                    <FastAPI className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <MediaWiki />
+                                <IntegrationCard label="LangChain">
+                                    <LangChain className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <GooglePaLM />
+                                <IntegrationCard label="Supabase">
+                                    <Supabase className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <Gemini />
+                                <IntegrationCard label="Hugging Face">
+                                    <HuggingFace className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <Replit />
+                                <IntegrationCard label="Python">
+                                    <Python className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <MagicUI />
+                                <IntegrationCard label="OpenAI">
+                                    <OpenAI className="h-full w-full" />
                                 </IntegrationCard>
                             </InfiniteSlider>
                         </div>
@@ -46,23 +46,23 @@ export default function IntegrationsSection() {
                                 speed={20}
                                 speedOnHover={10}
                                 reverse>
-                                <IntegrationCard>
-                                    <Gemini />
+                                <IntegrationCard label="LangGraph">
+                                    <LangChain className="h-full w-full text-orange-500" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <Replit />
+                                <IntegrationCard label="Gemini">
+                                    <Gemini className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <MediaWiki />
+                                <IntegrationCard label="FastAPI">
+                                    <FastAPI className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <MagicUI />
+                                <IntegrationCard label="Supabase">
+                                    <Supabase className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <VSCodium />
+                                <IntegrationCard label="Python">
+                                    <Python className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <GooglePaLM />
+                                <IntegrationCard label="Hugging Face">
+                                    <HuggingFace className="h-full w-full" />
                                 </IntegrationCard>
                             </InfiniteSlider>
                         </div>
@@ -71,23 +71,23 @@ export default function IntegrationsSection() {
                                 gap={24}
                                 speed={20}
                                 speedOnHover={10}>
-                                <IntegrationCard>
-                                    <Replit />
+                                <IntegrationCard label="FastAPI">
+                                    <FastAPI className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <MagicUI />
+                                <IntegrationCard label="LangChain">
+                                    <LangChain className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <Gemini />
+                                <IntegrationCard label="Supabase">
+                                    <Supabase className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <VSCodium />
+                                <IntegrationCard label="OpenAI">
+                                    <OpenAI className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <MediaWiki />
+                                <IntegrationCard label="Embeddings">
+                                    <HuggingFace className="h-full w-full" />
                                 </IntegrationCard>
-                                <IntegrationCard>
-                                    <GooglePaLM />
+                                <IntegrationCard label="Python">
+                                    <Python className="h-full w-full" />
                                 </IntegrationCard>
                             </InfiniteSlider>
                         </div>
@@ -100,8 +100,8 @@ export default function IntegrationsSection() {
                         </div>
                     </div>
                     <div className="mx-auto mt-12 max-w-lg space-y-6 text-center">
-                        <h2 className="text-balance text-3xl font-semibold md:text-4xl">Integrate with your favorite tools</h2>
-                        <p className="text-muted-foreground">Connect seamlessly with popular platforms and services to enhance your workflow.</p>
+                        <h2 className="text-balance text-3xl font-semibold md:text-4xl">Powered by Modern Engineering</h2>
+                        <p className="text-muted-foreground">Built with LangGraph, FastAPI, Supabase, and ShadCN for specific, reliable legal triage.</p>
 
                         <Button
                             variant="outline"
@@ -116,9 +116,9 @@ export default function IntegrationsSection() {
     )
 }
 
-const IntegrationCard = ({ children, className, isCenter = false }: { children: React.ReactNode; className?: string; position?: 'left-top' | 'left-middle' | 'left-bottom' | 'right-top' | 'right-middle' | 'right-bottom'; isCenter?: boolean }) => {
+const IntegrationCard = ({ children, className, isCenter = false, label }: { children: React.ReactNode; className?: string; isCenter?: boolean; label?: string }) => {
     return (
-        <div className={cn('bg-background relative z-20 flex size-12 rounded-full border', className)}>
+        <div className={cn('bg-background relative z-20 flex size-12 rounded-full border', className)} title={label}>
             <div className={cn('m-auto size-fit *:size-5', isCenter && '*:size-8')}>{children}</div>
         </div>
     )
