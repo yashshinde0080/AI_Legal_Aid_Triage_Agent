@@ -121,3 +121,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide Unicorn Studio Badge */
+a[href*="unicorn.studio"],
+a[href^="https://unicorn.studio"],
+.us-badge,
+[class*="unicorn-badge"],
+[id*="unicorn-badge"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  position: absolute !important;
+  z-index: -9999 !important;
+}

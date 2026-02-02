@@ -1,9 +1,34 @@
+import { useEffect } from "react";
 import { ArrowUpRight, CirclePlay } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export default function Hero() {
+  useEffect(() => {
+    // Initialize Unicorn Studio
+    const loadUnicorn = () => {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.0.4/dist/unicornStudio.umd.js";
+      script.onload = () => {
+        // @ts-ignore
+        if (window.UnicornStudio) {
+           // @ts-ignore
+          window.UnicornStudio.init();
+        }
+      };
+      document.body.appendChild(script);
+    };
+
+    // @ts-ignore
+    if (!window.UnicornStudio) {
+      loadUnicorn();
+    } else {
+      // @ts-ignore
+      window.UnicornStudio.init();
+    }
+  }, []);
+
   return (
     <div className="flex min-h-screen items-center justify-center overflow-hidden">
       <div className="mx-auto grid w-full max-w-(--breakpoint-xl) gap-12 px-6 py-12 lg:grid-cols-2 lg:py-0">
@@ -38,7 +63,9 @@ export default function Hero() {
             </Button>
           </div>
         </div>
-        <div className="aspect-video w-full rounded-xl bg-accent lg:aspect-auto lg:h-screen lg:w-[1000px] lg:rounded-none" />
+        <div className="aspect-video w-full rounded-xl lg:aspect-auto lg:h-screen lg:w-[1000px] lg:rounded-none overflow-hidden flex items-center justify-center">
+            <div data-us-project="67Al8czdXlytAneACcol" style={{ width: '100%', height: '100%', minHeight: '500px' }}></div>
+        </div>
       </div>
     </div>
   );
