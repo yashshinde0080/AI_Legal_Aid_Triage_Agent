@@ -41,7 +41,7 @@ const keyMetrics: Metric[] = [
   },
   {
     label: "Auditability",
-    value: "100%",
+    value: "80%",
     caption: "Every step logged",
   },
 ];
@@ -49,15 +49,15 @@ const keyMetrics: Metric[] = [
 const motionProcess: ProcessStep[] = [
   {
     label: "Intake & Classification",
-    progress: 100,
+    progress: 90,
   },
   {
     label: "RAG Retrieval",
-    progress: 100,
+    progress: 95,
   },
   {
     label: "Safety Validation",
-    progress: 100,
+    progress: 85,
   },
 ];
 
@@ -71,7 +71,7 @@ const inspirationGallery: GalleryImage[] = [
     alt: "Creative workspace with monitors and sketchbook",
   },
   {
-    src: "https://images.unsplash.com/photo-1515169067865-5387ec356754?w=400&h=320&fit=crop&q=80",
+    src: "https://plus.unsplash.com/premium_photo-1664443577580-dd2674e9d359?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8Z3JhaW55JTIwZ3JhZGllbnR8ZW58MHx8MHx8fDA%3D",
     alt: "Colorful motion design storyboard pinned to a wall",
   },
   {
